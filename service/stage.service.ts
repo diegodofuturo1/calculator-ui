@@ -6,7 +6,7 @@ const { path } = info
 
 const getAll = async () => {
     try {
-        const { data } = await axios.get(`${path}/operation`)
+        const { data } = await axios.get(`${path}/stage`)
         return data ?? []
     }
     catch {

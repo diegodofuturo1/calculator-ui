@@ -3,10 +3,9 @@ import info from './info'
 
 const { path } = info
 
-
 const getAll = async () => {
     try {
-        const { data } = await axios.get(`${path}/operation`)
+        const { data } = await axios.get(`${path}/action`)
         return data ?? []
     }
     catch {
@@ -14,8 +13,8 @@ const getAll = async () => {
     }
 }
 
-const operationService = {
+const actionService = {
     getAll
 }
 
-export default operationService
+export default actionService
