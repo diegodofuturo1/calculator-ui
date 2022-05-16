@@ -13,7 +13,6 @@ const EntityTable = () => {
     const [loading, setLoading] = useState(false)
     const [dataSource, setDataSource] = useState<EntityListType>({ action: [], operation: [], stage: [] })
 
-
     const columns: EntityColumnsType = {
         action: [
             {
