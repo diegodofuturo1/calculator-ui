@@ -1,0 +1,1 @@
+export type StageType = "created" | "ready" | "calculating" | "calculated"
