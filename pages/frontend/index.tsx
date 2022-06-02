@@ -7,7 +7,10 @@ import { ActionDto } from "../../entity/dtos/action.dto"
 import { StageType } from "../../entity/type/stage.type"
 import OperationList from "../../components/operation-list"
 import { Operation, OperationType } from "../../entity/operation.entity"
-import { Card, Col, Layout, Row, InputNumber, Select, Button, Divider, Progress } from "antd"
+import { CaretLeftOutlined, CaretRightOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons"
+import { Card, Col, Layout, Row, InputNumber, Select, Button, Divider, Progress, Tooltip } from "antd"
+
+export type FrontendPageStatus = 'ready' | 'loading-stage' | 'save-stage' | 'save-operation' | 'save-actions' | 'calculation'
 
 const FrontendPage: NextPage = () => {
 
@@ -26,33 +29,34 @@ const FrontendPage: NextPage = () => {
     const [progress, setProgress] = useState(0)
     const [percent, setPercent] = useState(0)
     const [status, setStatus] = useState<StageType>("created")
+    const [statusPage, setStatusPage] = useState<FrontendPageStatus>("loading-stage")
 
     const [actions, setActions] = useState<ActionDto[]>([])
+    const [loadings, setLoadings] = useState<ActionDto[]>([])
     const [corrects, setCorrects] = useState<ActionDto[]>([])
     const [incorrects, setIncorrects] = useState<ActionDto[]>([])
 
-    useEffect(() => console.log('[ACTIONS]', actions))
-    useEffect(() => console.log('[OPERATIONS]', operations))
-    useEffect(() => console.log('[STATUS]', status))
-    useEffect(() => console.log('[PROGRESS]', progress))
-    useEffect(() => console.log('[PERCENT]', percent))
-    useEffect(() => console.log('[PROBABILITY]', probability))
+    const setStage = (stage: Stage) => {
+        if (stage) {
+            if (stage.id && stage.id != id)
+                setId(stage.id)
 
-    useEffect(() => {
-        const runEffect = async () => {
-            const stage: Stage = await service.stage.getByLevel(level)
-            console.log('[STAGE]', stage)
-            if (stage) {
-                setId(stage.id ?? '')
+            if (stage.start && stage.start != start)
                 setStart(stage.start)
-                setEnd(stage.end)
-                setTimes(stage.times)
-                setStatus(stage.status)
-            }
-        }
 
-        runEffect()
-    }, [level])
+            if (stage.end && stage.end != end)
+                setEnd(stage.end)
+
+            if (stage.times && stage.times != times)
+                setTimes(stage.times)
+
+            if (stage.status && stage.status != status)
+                setStatus(stage.status)
+
+            if (stage.level && stage.level != level)
+                setLevel(stage.level)
+        }
+    }
 
     useEffect(() => {
         const runEffect = async () => {
@@ -76,6 +80,9 @@ const FrontendPage: NextPage = () => {
             setCorrects(_corrects)
             setIncorrects(_incorrects)
             setOperations(_operations)
+
+            if (status == 'calculated')
+                setProgress(_operations.length && times ? _operations.length ** times : 0)
         }
 
         if (id)
@@ -83,26 +90,24 @@ const FrontendPage: NextPage = () => {
     }, [id])
 
     useEffect(() => {
-        setProbability(operations.length ** times)
-
-        if (status == 'calculated')
-            setProgress(operations.length ** times)
-
-    }, [operations.length, times])
+        setProbability(operations.length && times ? operations.length ** times : 0)
+    }, [operations.length, times, status])
 
     useEffect(() => {
         const _percent = progress / probability * 100
-        console.log('[RESULT]', _percent)
-        setPercent(_percent ?? 0)
+     
+        if (_percent)
+            setPercent(_percent)
+        else
+            setPercent(0)
     }, [progress])
 
     useEffect(() => {
-        if (percent < 100) {
-            if (status == 'calculating')
-                calculate()
-        }
-        else
-            setStatus('calculated')
+        if (percent == 100)
+            saveStatusHandler('calculated')
+        
+        if (actions.length > 0)
+            calculate()
     }, [percent])
 
     const calculate = async () => {
@@ -155,7 +160,7 @@ const FrontendPage: NextPage = () => {
             const data = await service.action.post(id)
             await service.stage.put({ id, status: 'ready' })
             setActions(data)
-            setStatus('ready')
+            saveStatusHandler('ready')
         }
 
         if (operations.length > 0 && times > 0)
@@ -169,12 +174,87 @@ const FrontendPage: NextPage = () => {
         calculate()
     }
 
+    const newStageHandler = () => {
+        const runHandler = async () => {
+            const stage: Stage = await service.stage.newStage()
+            setStage(stage)
+        }
+
+        runHandler()
+    }
+
+    const loadStageHandler = () => {
+        const runEffect = async () => {
+            const stage: Stage = await service.stage.getByLevel(level)
+            setStage(stage)
+            setStatusPage('ready')
+        }
+        
+        if (level && level > 0)
+            runEffect()
+    }
+
+    const saveStatusHandler = (status: StageType) => {
+        const runHandler = async () => {
+            await service.stage.put({ id, status })
+            setStatus(status)
+        }
+
+        runHandler()
+    }
+
+    useEffect(() => {
+        switch (statusPage) {
+            case 'loading-stage':
+                loadStageHandler()
+                break
+
+            default:
+                break
+        }
+    }, [statusPage])
+
+    useEffect(() => setStatusPage('loading-stage'), [level])
+
     return (
         <Layout style={{ padding: '20px' }}>
             <Card title={'Frontend'} style={{ overflowY: 'scroll' }}>
                 <Row justify="center">
                     <Col span={12}>
-                        <Divider>Fase {level}</Divider>
+                        <Divider>
+                            <Tooltip placement="bottom" title="anterior">
+                                <CaretLeftOutlined
+                                    onClick={() => setLevel(level - 1)}
+                                    style={{ cursor: 'pointer', margin: '0px 10px' }}
+                                />
+                            </Tooltip>
+                            Fase {level}
+                            <Tooltip
+                                placement="bottom"
+                                title="editar"
+                            >
+                                <EditOutlined
+                                    onClick={() => setLevel(level)}
+                                    style={{ cursor: 'pointer', marginLeft: '10px' }}
+                                />
+                            </Tooltip>
+                            <Tooltip
+                                placement="bottom"
+                                title="nova">
+                                <PlusOutlined
+                                    onClick={newStageHandler}
+                                    style={{ cursor: 'pointer', marginLeft: '10px' }}
+                                />
+                            </Tooltip>
+                            <Tooltip
+                                placement="bottom"
+                                title="próximo">
+                                <CaretRightOutlined
+                                    onClick={() => setLevel(level + 1)}
+                                    style={{ cursor: 'pointer', marginLeft: '10px' }}
+                                />
+                            </Tooltip>
+                        </Divider>
                         <Row justify="space-between">
                             <Col span={7}>
                                 <InputNumber addonBefore="start" defaultValue={0} value={start} onChange={value => setStart(value)} onBlur={saveStageHandler} />
@@ -225,20 +305,15 @@ const FrontendPage: NextPage = () => {
                             </Button>
                         </Row>
                         <Progress percent={percent ?? 0} status={percent < 100 || !percent ? 'active' : 'success'} style={{ display: status == 'created' ? 'none' : undefined, marginTop: '20px' }} />
-                        <Divider></Divider>
                     </Col>
                 </Row>
-                <Row justify="space-around">
-                    <Col span={7} style={{ minHeight: '500px' }} hidden={status == 'created' || status == 'ready'}>
-                        <Divider>Corretos</Divider>
+                <Row justify="center">
+                    <Col span={12} style={{ minHeight: '500px' }} hidden={status == 'created'}>
+                        <Divider>Resultados</Divider>
                         <ActionList actions={corrects} start={start} />
-                    </Col>
-                    <Col span={7} style={{ minHeight: '500px' }} hidden={status == 'created' || status == 'calculated'}>
-                        <Divider>Calculando...</Divider>
+                        <Divider></Divider>
                         <ActionList actions={actions} start={start} />
-                    </Col>
-                    <Col span={7} style={{ minHeight: '500px' }} hidden={status == 'created' || status == 'ready'}>
-                        <Divider>Incorretos</Divider>
+                        <ActionList actions={loadings} spin start={start} />
                         <ActionList actions={incorrects} start={start} />
                     </Col>
                 </Row>

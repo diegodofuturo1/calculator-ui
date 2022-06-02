@@ -33,7 +33,7 @@ const EntityTable = () => {
                 title: 'Correct',
                 dataIndex: 'correct',
                 key: 'correct',
-                render: (correct, action) => <CorrectTag value={correct} key={action.id} />
+                render: (correct, action) => <CorrectTag value={correct} key={`correct-tag-${action.id}`} />
             },
         ],
         operation: [

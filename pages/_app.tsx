@@ -10,12 +10,12 @@ function MyApp({ Component, pageProps }: AppProps) {
     <Row style={{ overflow: 'hidden' }}>
       <Col span={4} style={{ height: '100vh' }}>
         <Menu theme='dark' mode="inline" style={{ height: '100vh' }}>
-          <Menu.Item><Link href={`/`}>Inicio</Link></Menu.Item>
-          <Menu.Item><Link href={`/experience`}>Formação/Experiencia</Link></Menu.Item>
-          <Menu.SubMenu title="Conhecimento">
-            <Menu.Item><Link href={`/frontend`}>Frontend</Link></Menu.Item>
-            <Menu.Item><Link href={`/backend`}>Backend</Link></Menu.Item>
-            <Menu.Item><Link href={`/database`}>Banco de Dados</Link></Menu.Item>
+          <Menu.Item key="menu-item-inicio"><Link href={`/`}>Inicio</Link></Menu.Item>
+          <Menu.Item key="menu-item-experience"><Link href={`/experience`}>Formação/Experiencia</Link></Menu.Item>
+          <Menu.SubMenu title="Conhecimento" key="submenu-knowlegde">
+            <Menu.Item key="menu-item-frontend"><Link href={`/frontend`}>Frontend</Link></Menu.Item>
+            <Menu.Item key="menu-item-backend"><Link href={`/backend`}>Backend</Link></Menu.Item>
+            <Menu.Item key="menu-item-database"><Link href={`/database`}>Banco de Dados</Link></Menu.Item>
           </Menu.SubMenu>
         </Menu>;
       </Col>

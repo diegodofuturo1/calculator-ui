@@ -56,8 +56,18 @@ const put = async (stage: Partial<Stage>) => {
     }
 }
 
+const newStage = async () => {
+    try {
+        const { data } = await axios.get(`${url}/new`)
+        return data
+    }
+    catch (exception: any) {
+        console.log(exception.message)
+    }
+}
+
 const operationService = {
-    getAll, post, getById, getByLevel, put
+    getAll, post, getById, getByLevel, put, newStage
 }
 
 export default operationService
